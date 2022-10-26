@@ -57,4 +57,18 @@ export class MainScene extends Phaser.Scene {
 
 # explicar el orden, demostrar con console.log en cada una
 
-# importar archivo en app.component.ts y agregar MainScene a la config
+# Preload background en la escena
+  this.load.setBaseURL('assets/smw/');
+
+  this.load.image('background', 'assets/smw/lv1_background.png');
+
+# agregar fondo en create()
+  this.add.image(0, 0, 'background');
+
+# Explicar que lo que falta es conectar la escena con el juego
+  agregar MainScene a la config
+
+# mostrar como esta mal centrado y explicar que el origen de las imagenes esta en su centro, se puede cambiar con setOrigin()
+  this.add.image(0, 0, 'background').setOrigin(0,0);
+
+_first commit_
