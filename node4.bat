@@ -1,0 +1,1 @@
+start /wait PowerShell -command "Start-Process powershell 'nvm use 17.4.0' -Verb RunAs"
