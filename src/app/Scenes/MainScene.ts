@@ -8,10 +8,7 @@ export class MainScene extends Phaser.Scene {
   keys!: any;
   score = 0;
   scoreCounter!: Phaser.GameObjects.Text;
-
-  init() {
-
-  }
+  coinsArray: Phaser.Physics.Arcade.Sprite[] = [];
 
   preload() {
     this.load.setBaseURL('assets/');
@@ -24,6 +21,10 @@ export class MainScene extends Phaser.Scene {
     this.load.image('coin_1', 'coin_1.png');
     this.load.image('coin_2', 'coin_2.png');
     this.load.image('coin_3', 'coin_3.png');
+
+    this.load.image('brick', 'brick.png');
+    this.load.image('particle', 'particle.png');
+
     this.load.spritesheet('mario_sheet', 'big_mario.png', {frameWidth: 16, frameHeight: 27});
   }
 
@@ -31,36 +32,54 @@ export class MainScene extends Phaser.Scene {
     this.add.image(0, 0, 'background').setOrigin(0, 0);
     
     this.mario = this.physics.add.sprite(100, 100, 'mario');
-    this.ground = this.physics.add.staticGroup({
-      key: 'ground',
-      frameQuantity: 16
-    });
+    
+    let ground = this.physics.add.staticGroup();
+    
+    ground.create(128, 208, 'ground');
+    ground.create(40, 184, 'block');
+    ground.create(56, 184, 'block');
+    ground.create(72, 184, 'block');
+    ground.create(56, 168, 'block');
 
-    Phaser.Actions.PlaceOnLine(
-      this.ground.getChildren(),
-      new Phaser.Geom.Line(8, 224-16, 256+8, 224-16)
-    );
-    this.ground.refresh();
+    ground.create(168, 88, 'block');
+    ground.create(184, 88, 'block');
+    ground.create(200, 88, 'block');
 
-    this.ground.create(40, 184, 'block');
-    this.ground.create(56, 184, 'block');
-    this.ground.create(72, 184, 'block');
-    this.ground.create(56, 168, 'block');
-
-    this.ground.create(168, 88, 'block');
-    this.ground.create(184, 88, 'block');
-    this.ground.create(200, 88, 'block');
-
-    this.physics.add.collider(this.mario, this.ground);
+    this.physics.add.collider(this.mario, ground);
 
     this.keys = this.input.keyboard.addKeys('A, LEFT, RIGHT');
     this.createAnimations();
 
-    this.addCoin(168, 136);
-    this.addCoin(184, 136);
-    this.addCoin(200, 136);
+    this.coinsArray.push(
+      this.addCoin(168, 136),
+      this.addCoin(184, 136),
+      this.addCoin(200, 136),
+    );
 
-    this.scoreCounter = this.add.text(8,4, `COINS: ${this.score}`, { font: '12px Consolas', color: '#000000' });
+    this.tweens.add({
+      targets: this.coinsArray,
+      y: 152,
+      duration: 1000,
+      repeat: -1,
+      yoyo: true,
+      ease: 'Sine.easeInOut',
+    });
+
+    this.scoreCounter = this.add.text(8,4, `COINS: ${this.score}`, { font: '16px Courier', color: '#000000' });
+
+    let particleManager = this.add.particles('particle');
+
+    let emitter = particleManager.createEmitter({
+      lifespan: 2000,
+      speedY: { min: -300, max: -200 },
+      speedX: { min: -200, max: 200 },
+      gravityY: 800,
+      on: false
+    });
+
+    this.addBrick(40, 88, emitter);
+    this.addBrick(56, 88, emitter);
+    this.addBrick(72, 88, emitter);
   }
   
   override update() {
@@ -90,12 +109,24 @@ export class MainScene extends Phaser.Scene {
   private addCoin(x: number, y: number) {
     let coin = this.physics.add.staticSprite(x, y, 'coin_1');
     coin.play('coin_spin');
-
+  
     this.physics.add.overlap(coin, this.mario, () => {
       this.score++;
       this.scoreCounter.text = `COINS: ${this.score}`
       coin.destroy();
-    })
+    });
+
+    return coin;
+  }
+
+  private addBrick(x: number, y: number, emitter: any) {
+    let brick = this.physics.add.staticImage(x, y, 'brick');
+    this.physics.add.collider(this.mario, brick, () => {
+      if (this.mario.body.blocked.up) {
+        emitter.explode( 8, x, y);
+        brick.destroy();
+      }
+    });
   }
 
   private createAnimations() {

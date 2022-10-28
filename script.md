@@ -13,7 +13,7 @@ config: Phaser.Types.Core.GameConfig = {
     physics: {
       default: 'arcade',
       arcade: {
-        gravity: { y: 1000 }
+        gravity: { y: 500 }
       }
     }
   };
@@ -60,9 +60,9 @@ export class MainScene extends Phaser.Scene {
 # explicar el orden, demostrar con console.log en cada una
 
 # Preload background en la escena
-  this.load.setBaseURL('assets/smw/');
+  this.load.setBaseURL('assets/');
 
-  this.load.image('background', 'assets/smw/lv1_background.png');
+  this.load.image('background', 'bg1.png');
 
 # agregar fondo en create()
   this.add.image(0, 0, 'background');
@@ -89,71 +89,27 @@ _first commit_
 # estaria bueno tener un suelo
 # cargamos la imagen
   this.load.image('ground', 'ground.png');
-# agregamos justo abajo de mario
-  this.physics.add.image(100, 208, 'ground');
-# y a partir de ahora a todas las cosas que sean parte del escenario vamos a ponerle el origen en la esquina superior izquierda para trabajar mas facil con las posiciones
-  this.physics.add.image(96, 208, 'ground')
+# agregamos abajo de la pantalla
+  this.physics.add.image(128, 208, 'ground');
+
 # el suelo se cae con mario, porque no deja de ser una imagen con propiedades fisicas
 # para elementos que no queremos que se muevan, que es lo que viene a ser el suelo, phaser tiene una clase que es static image
-  this.physics.add.staticImage(96, 208, 'ground')
+  this.physics.add.staticImage(128, 208, 'ground')
 
 # mario sigue atravesando el suelo, porque falta un elemento más que es un collider (una clase que le dice al juego qué objetos colisionan entre sí)
 
 # para empezar vamos a guardar una referencia a mario y al suelo en la escena
 
   mario!: Phaser.Physics.Arcade.Image;
-  ground!: Phaser.Physics.Arcade.Image;
 
   this.mario = this.physics.add.image(100, 100, 'mario');
-  this.ground = this.physics.add.staticImage(104, 208, 'ground').setOrigin(0,0);
+  let ground = this.physics.add.staticImage(128, 208, 'ground')
 
 # ahora agregamos el collider entre los dos objetos
   this.physics.add.collider(this.mario, this.ground);
 
 # y ahora mario se queda parado en el suelo
 
-
-# Ahora vamos a extender el suelo
-# podriamos copiar y pegar varias veces esta linea cambiando la posición pero hay una mejor forma de hacerlo que es con un staticgroup
-
-this.ground = this.physics.add.staticGroup({
-      key: 'ground',
-      frameQuantity: 16
-    })
-
-# y cambiamos el tipo de la propiedad
-  ground!: Phaser.Physics.Arcade.StaticGroup;
-
-# linea magica warning:
-# queremos que estos 16 bloques de suelo esten en una linea recta, asi que podemos hacerlo con código:
-
-  Phaser.Actions.PlaceOnLine(
-
-  );
-
-# a esta funcion le pasamos un array de objetos como primer argumento
-
-Phaser.Actions.PlaceOnLine(
-      this.ground.getChildren(),
-      
-    );
-
-# y el segundo argumento es una linea
- dibujitos con tablet en paint para explicar el posicionamiento
- recordar que en el ultimo punto de la linea no se pone nada
-
- Phaser.Actions.PlaceOnLine(
-      this.ground.getChildren(),
-      new Phaser.Geom.Line(8, 224-16, 256+8, 224-16)
-    );
-
-# Ahora tiramos otra linea magica que es 
-
-    this.ground.refresh();
-
-# esto lo que hace es actualizar la posición fisica de cada uno de los componentes del staticgroup, si no la pusieramos entonces veríamos lo mismo, pero para el motor de fisicas sería como si nunca se hubieran movido de la posicion por defecto, que es  0,0
-
-explicar quitando y poniendo como funciona
 
 # pero bueno, tenemos a mario, tenemos un suelo, para que esto sea un juego le falta lo mas importante no? el input
 
@@ -345,19 +301,197 @@ if (!this.mario.body.blocked.down) {
 # ahora es mas bonito
 # pero no es muy divertido
 
-# primero agregar plataformas
+# primero agregar mas plataformas
   this.load.image('block', 'block.png');
 
+# vamos a convertir el suelo en un staticgroup que sirve para agrupar varios elementos que comparten propiedades fisicas
+
+let ground = this.physics.add.staticGroup()
+
+# le agregamos el suelo antiguo como parte del grupo
+  ground.create(128, 208, 'ground');
+
 # agregar nuevos bloques al staticgroup
-    this.ground.create(40, 184, 'block');
-    this.ground.create(56, 184, 'block');
-    this.ground.create(72, 184, 'block');
-    this.ground.create(56, 168, 'block');
+    ground.create(40, 184, 'block');
+    ground.create(56, 184, 'block');
+    ground.create(72, 184, 'block');
+    ground.create(56, 168, 'block');
   
 # mas plataformas
-    this.ground.create(168, 88, 'block');
-    this.ground.create(184, 88, 'block');
-    this.ground.create(200, 88, 'block');
+    ground.create(168, 88, 'block');
+    ground.create(184, 88, 'block');
+    ground.create(200, 88, 'block');
 
+
+# quiero introducir dos conceptos mas, sistemas de particulas y tweens
+# y voy a empezar por los tweens porque tienen un nombre gracioso
+
+# quiero mover las monedas arriba y abajo 
+
+# crear array vacio
+  coinsArray: Phaser.Physics.Arcade.Sprite[] = [];
+
+# en la funcion de crear monedas
+  this.coinsArray.push(coin);
+# al final:  
+    return coin;
+
+# agregar coins al array:
+
+this.coinsArray.push(
+      this.addCoin(168, 136),
+      this.addCoin(184, 136),
+      this.addCoin(200, 136)
+    );
+
+# crear tween
+# explicar cada propiedad
+this.tweens.add({
+      targets: this.coinsArray,
+      y: 152,
+      duration: 1000,
+      repeat: -1,
+    });
+
+# agregar yoyo para que vaya y venga
+
+  yoyo: true
+
+
+# cambiar ease para que no sea lineal
+# explicar por encima que es y mostrar varias
+
+  ease: 'Sine.easeInOut'
+  
+# explicar que los tweens son poderosos y cambian mucho mas que la posicion
+- rotacion
+- color
+- tamaño
+
+
+# Crear bloque de ladrillos
+
+
+
+# Mostrar modo debug para ver colisiones
+debug:true en config de arcade
 
 # Bloques de ladrillo que se rompen para introducir particulas
+  this.load.image('brick', 'brick.png');
+  this.load.image('particle', 'particle.png');
+
+  al final de create:
+
+  let brick = this.physics.add.staticImage(56, 88, 'brick');
+    
+  this.physics.add.collider(this.mario, brick, () => {
+    if (this.mario.body.blocked.up) {
+      brick.destroy();
+    }
+  });
+
+  # no queremos que el bloque desaparezca sin mas
+  # agregamos particulas
+arriba del collider
+
+  let particleManager = this.add.particles('particle');
+
+  # el manager no hace nada asi que creamos un emitter 
+
+  let emitter = particleManager.createEmitter({
+      
+  })
+    
+# explicar las propiedades.
+# queremos particulas que vayan hacia arriba y caigan
+lifespan: 2000,
+speed: 300,
+
+# mover para que se vea
+
+  emitter.setPosition(100,100)
+
+# queremos particulas que vayan hacia arriba y caigan
+speedY: { min: -300, max: -200 },
+speedX: { min: -200, max: 200 },
+gravityY: 800
+
+# ya tenemos lo que queremos asi que podemos apagarlo
+on: false;
+
+# lo disparamos al romper el bloque 
+emitter.explode( 8, brick.x, brick.y);
+
+# movemos a funcion aparte 
+private addBrick(x: number, y: number, emitter: any) {
+    let brick = this.physics.add.staticImage(x, y, 'brick');
+    this.physics.add.collider(this.mario, brick, () => {
+      if (this.mario.body.blocked.up) {
+        emitter.explode( 8, x, y);
+        brick.destroy();
+      }
+    });
+  }
+
+
+# creamos mas bloques
+    this.addBrick(40, 88, emitter);
+    this.addBrick(56, 88, emitter);
+    this.addBrick(72, 88, emitter);
+
+
+# FINAL THING
+# vamos a agregar una pantalla de titulo
+
+# crear TitleScene.ts
+
+export class TitleScene extends Phaser.Scene {
+  constructor() {
+    super({ key: 'TitleScene' });
+  }
+  
+  preload() {
+
+  }
+
+  create() {
+    
+  }
+
+}
+
+# cargar assets
+  this.load.setBaseURL('assets/');
+  this.load.image('background', 'title.png');
+  this.load.image('start', 'start.png');
+
+# crear fondo y boton
+
+  this.add.image(0, 0, 'title').setOrigin(0, 0);
+  let button = this.add.image(128, 144, 'start');
+
+# agregar interaccion
+
+button.setInteractive();
+
+    button.on('pointerdown', () => {
+      this.scene.start('MainScene')
+    })
+
+
+# THE END
+
+
+
+# fade out?
+button.on('pointerdown', () => {
+      this.cameras.main.fadeOut(300);
+      this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+        this.scene.start('MainScene');
+      });
+    });
+
+
+
+# mario no se cae por el borde
+    this.mario.setCollideWorldBounds(true)

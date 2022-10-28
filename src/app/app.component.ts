@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import * as Phaser from 'phaser';
 import { MainScene } from './Scenes/MainScene';
+import { TitleScene } from './Scenes/TitleScene';
 
 @Component({
   selector: 'app-root',
@@ -17,7 +18,7 @@ export class AppComponent implements OnInit {
     height: 224,
     zoom: 3,
     pixelArt: true,
-    scene: [ MainScene ],
+    scene: [ TitleScene, MainScene ],
     parent: 'mario',
     backgroundColor: "#001122",
     physics: {
